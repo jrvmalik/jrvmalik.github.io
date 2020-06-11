@@ -18,12 +18,15 @@
         photoplethysmogram, and the arterial blood pressure signal.<br><br>
         Begin by selecting a signal from your computer.
         The file should be in .csv or .txt format.
-        The file should have exactly one row of numeric values, and each value should be separated by a comma.<br></div>
+        The file should have exactly one row of numeric (float) values, and each value should be separated by a
+        comma. When exporting from MATLAB, use the command <span id='inline' style='background-color:#DADEE0'>dlmwrite('var.csv', var(:)', 'precision',
+            '%f')</span>.<br></div>
     <input type="file" id="signalInput" accept=".csv, .txt"><br><br>
     <div>Optionally, add some existing annotations. The file should be in .csv or .txt format.
         The file should have exactly one row of integer values, and each annotation location (in samples) should be
-        separated by a
-        comma.<br></div>
+        separated by a comma. When exporting from MATLAB, use the command <span id='inline' style='background-color:#DADEE0'>dlmwrite('var.csv', var(:)',
+            'precision',
+            '%d')</span>.<br></div>
     <input type="file" id="annotationInput" accept=".csv, .txt"><br><br>
     <label for="hertz">Specify the sampling rate of the signal (in Hz).</label>
     <input type="text" id="hertz" size="8" min="1" minlength="1" value="200"><br>

@@ -3,3 +3,8 @@ html {
     font-size: 22px;
     text-align: center;
   }
+
+#inline {
+    font-family: Courier;
+    font-size: 18px;
+}
