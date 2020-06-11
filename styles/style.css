@@ -1,11 +1,5 @@
 html {
     font-family: 'Muli', sans-serif;
     font-size: 22px;
+    text-align: center;
   }
-
-html {text-align: center;}
-
-RRCanvas {
-    outline: black 3px solid;
-}
-

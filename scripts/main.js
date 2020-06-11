@@ -118,7 +118,7 @@ function beginAnnotation(sig, anno) {
 
     }
 
-    function plotAction(sg) {
+    function plotAction() {
 
         // clear the current plot
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -132,15 +132,15 @@ function beginAnnotation(sig, anno) {
         }
 
         // plot line on canvas
-        if (sg.length > 0) {
+        if (finish - start > 0) {
 
             // normalize signal
-            var YMax = Math.max(...sg);
-            var YMin = Math.min(...sg);
+            var YMax = Math.max(...sig.slice(start - 1, finish));
+            var YMin = Math.min(...sig.slice(start - 1, finish));
             YMax = YMax + 0.04 * (YMax - YMin); // some whitespace padding
             YMin = YMin - 0.04 * (YMax - YMin);
-            var XMax = sg.length - 1;
-            var XMin = 0;
+            var XMax = finish - 1;
+            var XMin = start - 1;
 
             // to change units of pixels
             function transformX(x) {
@@ -154,12 +154,12 @@ function beginAnnotation(sig, anno) {
 
             // plot first point of sg
             ctx.beginPath()
-            ctx.moveTo(transformX(0), transformY(sg[0]))
+            ctx.moveTo(transformX(0), transformY(sig[start - 1]))
 
             // plot remaining points of sg
             var sampleIndex;
-            for (sampleIndex = 1; sampleIndex < sg.length; sampleIndex++) {
-                ctx.lineTo(transformX(sampleIndex), transformY(sg[sampleIndex]));
+            for (sampleIndex = start - 1; sampleIndex < finish; sampleIndex++) {
+                ctx.lineTo(transformX(sampleIndex), transformY(sig[sampleIndex]));
             }
             ctx.stroke(); // linearly interpolate
 
@@ -169,7 +169,7 @@ function beginAnnotation(sig, anno) {
                 var jj;
                 for (jj = 0; jj < an.length; jj++) {
                     ctx.beginPath();
-                    ctx.arc(transformX(an[jj] - start + 1), transformY(sg[an[jj] - start + 1]), 20, 0, 2 * Math.PI);
+                    ctx.arc(transformX(an[jj]), transformY(sig[an[jj]]), 20, 0, 2 * Math.PI);
                     ctx.fill();
                 }
             }
@@ -229,11 +229,21 @@ function beginAnnotation(sig, anno) {
 
         }
 
+        // center of current frame
+        var pos = Math.round((start + frame / 2) / sig.length * (RRCanvas.width - 1));
+
+        // plot center of current frame
+        RRCtx.beginPath();
+        RRCtx.moveTo(pos, 0);
+        RRCtx.lineTo(pos, RRCanvas.height - 1);
+        RRCtx.strokeStyle = "black"; // line color
+        RRCtx.stroke();
+
     }
 
     // update plot
     getPlottingPreferences();
-    plotAction(sig.slice(start - 1, finish));
+    plotAction();
     plotRR();
 
     // manage key presses (for shifting frame)
@@ -246,14 +256,16 @@ function beginAnnotation(sig, anno) {
                 start = Math.max(1, start - Math.round(frame / 2));
                 document.getElementById("startTime").value = (start - 1) / Fs;
                 finish = start - 1 + frame;
-                plotAction(sig.slice(start - 1, finish));
+                plotRR();
+                plotAction();
                 break;
             case "ArrowRight":
                 // shift right
                 start = Math.min(sig.length - frame + 1, start + Math.round(frame / 2));
                 document.getElementById("startTime").value = (start - 1) / Fs;
                 finish = start - 1 + frame;
-                plotAction(sig.slice(start - 1, finish));
+                plotRR();
+                plotAction();
                 break;
             default:
                 // no match
@@ -264,7 +276,7 @@ function beginAnnotation(sig, anno) {
     var updateButton = document.getElementById("update");
     updateButton.addEventListener("click", function () {
         getPlottingPreferences();
-        plotAction(sig.slice(start - 1, finish));
+        plotAction();
         plotRR();
     });
 
@@ -310,7 +322,6 @@ function beginAnnotation(sig, anno) {
                 anno.unshift(XSample); // add to beginning of annotations
             } else if ((XSample - anno[anno.length - 1]) / frame * (canvas.width - 1) > clickRadius) {
                 anno.push(XSample); // add to end of annotations
-                console.log(XSample - anno[anno.length - 1]);
             } else {
                 // search through markers for one that is close
                 for (rIndex = 0; rIndex < anno.length; rIndex++) {
@@ -331,7 +342,7 @@ function beginAnnotation(sig, anno) {
             anno = [XSample];
         }
         // update plots
-        plotAction(sig.slice(start - 1, finish));
+        plotAction();
         plotRR();
     });
 
@@ -349,7 +360,8 @@ function beginAnnotation(sig, anno) {
         finish = start - 1 + frame;
 
         // replot
-        plotAction(sig.slice(start - 1, finish));
+        plotAction();
+        plotRR();
 
     }, false);
 
