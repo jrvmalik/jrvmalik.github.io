@@ -1,1 +1,353 @@
-function onload(){const e=document.getElementById("signalInput"),t=document.getElementById("annotationInput");document.getElementById("ready").addEventListener("click",function(){const n=e.files;n.length>0&&Papa.parse(n[0],{dynamicTyping:!0,skipEmptyLines:!0,complete:function(e,n){const a=e.data[0],i=t.files;if(i.length>0)Papa.parse(i[0],{dynamicTyping:!0,skipEmptyLines:!0,complete:function(e,t){var n=e.data[0];o(a,n)}});else{o(a,[])}}})});var n=document.getElementById("canvas"),a=document.getElementById("RRCanvas"),i=document.documentElement.clientWidth;i=Math.min(1080,i),n.width=5*i,n.style.width=i+"px",n.height=2400,n.style.height="480px",a.width=n.width,a.style.width=n.style.width,a.height=1200,a.style.height="240px";var d=n.getContext("2d");d.lineWidth=5,d.fillStyle="#0E47D6";var h=a.getContext("2d");function o(t,i){var o,l,r,c;function u(){o=document.getElementById("hertz").value,r=Math.min(t.length,document.getElementById("frame").value*o),r=Math.max(r,o),document.getElementById("frame").value=r/o,l=Math.round(document.getElementById("startTime").value*o)+1,l=Math.max(1,l),l=Math.min(t.length-r+1,l),document.getElementById("startTime").value=(l-1)/o,c=l-1+r}function s(e){d.clearRect(0,0,n.width,n.height);var t=[];for(annoIndex=0;annoIndex<i.length;annoIndex++)i[annoIndex]>=l&&i[annoIndex]<c&&t.push(i[annoIndex]);if(e.length>0){var a=Math.max(...e),h=Math.min(...e);h-=.04*((a+=.04*(a-h))-h);var o,r=e.length-1,u=0;function s(e){return Math.round((e-u)/(r-u)*(n.width-1))}function m(e){var t=1-(e-h)/(a-h);return Math.round(t*(n.height-1))}for(d.beginPath(),d.moveTo(s(0),m(e[0])),o=1;o<e.length;o++)d.lineTo(s(o),m(e[o]));if(d.stroke(),t.length>0)for(anIndex=0;anIndex<t.length;anIndex++)d.beginPath(),d.arc(s(t[anIndex]-l+1),m(e[t[anIndex]-l+1]),20,0,2*Math.PI),d.fill()}}function m(){if(h.clearRect(0,0,a.width,a.height),h.beginPath(),h.rect(0,0,a.width,a.height),h.strokeStyle="black",h.stroke(),i.length>1){var e,n=[];for(e=1;e<i.length;e++)n.push(i[e]-i[e-1]);var d=Math.max(...n),o=Math.min(...n);o-=.04*((d+=.04*(d-o))-o);var l=t.length,r=1;function c(e){return Math.round((e-r)/(l-r)*(a.width-1))}function u(e){var t=1-(e-o)/(d-o);return Math.round(t*(a.height-1))}for(h.beginPath(),h.moveTo(c(i[1]),u(n[0])),e=1;e<n.length;e++)h.lineTo(c(i[e+1]),u(n[e]));h.strokeStyle="#860010",h.stroke()}}function g(e,t){return t.pageX-function(e){var t=0;if(e.offsetParent){do{t+=e.offsetLeft}while(e=e.offsetParent);return t}}(e)}u(),s(t.slice(l-1,c)),m(),document.addEventListener("keydown",function(e){switch(e.code){case"ArrowLeft":l=Math.max(1,l-Math.round(r/2)),document.getElementById("startTime").value=(l-1)/o,c=l-1+r,s(t.slice(l-1,c));break;case"ArrowRight":l=Math.min(t.length-r+1,l+Math.round(r/2)),document.getElementById("startTime").value=(l-1)/o,c=l-1+r,s(t.slice(l-1,c))}}),document.getElementById("update").addEventListener("click",function(){u(),s(t.slice(l-1,c)),m()}),document.getElementById("done").addEventListener("click",function(){var t=new Blob([i],{type:"text/csv; encoding:utf-8"});saveAs(t,"anno"+e.files[0].name)}),n.addEventListener("click",function(e){var a,d=5*g(this,e),h=Math.round(d/(n.width-1)*r+l);if(i.length>0)if((i[0]-h)/r*(n.width-1)>30)i.unshift(h);else if((h-i[i.length-1])/r*(n.width-1)>30)i.push(h),console.log(h-i[i.length-1]);else for(a=0;a<i.length;a++){if(Math.abs(h-i[a])/r*(n.width-1)<=30){i.splice(a,1);break}if(i[a]>h){i.splice(a,0,h);break}}else i=[h];s(t.slice(l-1,c)),m()}),a.addEventListener("click",function(e){var n=5*g(this,e),i=Math.round(n/(a.width-1)*t.length);l=i-r/2,l=Math.max(1,l),l=Math.min(t.length-r+1,l),document.getElementById("startTime").value=(l-1)/o,c=l-1+r,s(t.slice(l-1,c))},!1)}h.lineWidth=5}
+// onload function
+function onload() {
+
+    // signal input element
+    const signalInputElement = document.getElementById("signalInput");
+
+    // annotation input element
+    const annotationInputElement = document.getElementById("annotationInput");
+
+    // ready button element
+    const readyButton = document.getElementById("ready");
+
+    // listen for button press and then call to proceed
+    readyButton.addEventListener("click", onReady);
+
+    // get canvas and RR canvas
+    var canvas = document.getElementById('canvas');
+    var RRCanvas = document.getElementById('RRCanvas');
+
+    // get window size
+    var w = document.documentElement.clientWidth;
+    w = Math.min(1080, w); // at most 1080 pixels
+
+    // set canvas dimensions
+    canvas.width = 5 * w; // bump up resolution by five times
+    canvas.style.width = w + "px";
+    canvas.height = 2400;
+    canvas.style.height = "480px"; // fixed at 480 pixels
+
+    // same dimensions for RR canvas
+    RRCanvas.width = canvas.width;
+    RRCanvas.style.width = canvas.style.width;
+    RRCanvas.height = 1200;
+    RRCanvas.style.height = "240px";
+
+    // get 2d context on canvas
+    var ctx = canvas.getContext('2d');
+    ctx.lineWidth = 5; // make sure lines will show up
+    ctx.fillStyle = "#0E47D6"; // marker color
+
+    // get 2d context on RR canvas
+    var RRCtx = RRCanvas.getContext('2d');
+    RRCtx.lineWidth = 5; // make sure lines will show up
+
+    // callback for ready button
+    function onReady() {
+
+        // signal file
+        const signalFile = signalInputElement.files;
+
+        // parse signal file (if given)
+        if (signalFile.length > 0) {
+            Papa.parse(signalFile[0], {
+                dynamicTyping: true,
+                skipEmptyLines: true,
+                complete: function (results, file) {
+                    const signal = results.data[0];
+
+                    // annotation file
+                    const annotationFile = annotationInputElement.files;
+
+                    // parse annotation file (if given)
+                    if (annotationFile.length > 0) {
+                        Papa.parse(annotationFile[0], {
+                            dynamicTyping: true,
+                            skipEmptyLines: true,
+                            complete: function (results, file) {
+                                var annotation = results.data[0];
+                                beginAnnotation(signal, annotation)
+                            }
+                        });
+                    } else { // no annotation provided; proceed anyways with empty array
+                        var annotation = []
+                        beginAnnotation(signal, annotation)
+                    }
+
+
+                }
+            });
+        };
+
+    }
+
+    // annotation action
+    function beginAnnotation(sig, anno) {
+
+        // initialize plotting preferences
+        var Fs;
+        var start;
+        var frame;
+        var finish;
+
+        // get plotting preferences
+        function getPlottingPreferences() {
+
+            // sampling rate
+            Fs = document.getElementById("hertz").value;
+
+            // length of signal to be plotted (in samples)
+            frame = Math.min(sig.length, Math.round(document.getElementById("frame").value * Fs));
+            frame = Math.max(frame, Math.round(Fs));
+            document.getElementById("frame").value = frame / Fs;
+
+            // first sample to be plotted (index from 1)
+            start = Math.round(document.getElementById("startTime").value * Fs) + 1;
+            start = Math.max(1, start);
+            start = Math.min(sig.length - frame + 1, start);
+            document.getElementById("startTime").value = (start - 1) / Fs;
+
+            // last sample to be plotted
+            finish = start - 1 + frame;
+
+        }
+
+        function plotAction(sg) {
+
+            // clear the current plot
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // get annotations in this window
+            var an = [];
+            for (annoIndex = 0; annoIndex < anno.length; annoIndex++) {
+                if (anno[annoIndex] >= start && anno[annoIndex] < finish) {
+                    an.push(anno[annoIndex]);
+                }
+            }
+
+            // plot line on canvas
+            if (sg.length > 0) {
+
+                // normalize signal
+                var YMax = Math.max(...sg);
+                var YMin = Math.min(...sg);
+                YMax = YMax + 0.04 * (YMax - YMin); // some whitespace padding
+                YMin = YMin - 0.04 * (YMax - YMin);
+                var XMax = sg.length - 1;
+                var XMin = 0;
+
+                // to change units of pixels
+                function transformX(x) {
+                    return Math.round((x - XMin) / (XMax - XMin) * (canvas.width - 1));
+                }
+
+                function transformY(y) {
+                    var tmp = 1 - (y - YMin) / (YMax - YMin); // normalize and reflect
+                    return Math.round(tmp * (canvas.height - 1));
+                }
+
+                // plot first point of sg
+                ctx.beginPath()
+                ctx.moveTo(transformX(0), transformY(sg[0]))
+
+                // plot remaining points of sg
+                var sampleIndex;
+                for (sampleIndex = 1; sampleIndex < sg.length; sampleIndex++) {
+                    ctx.lineTo(transformX(sampleIndex), transformY(sg[sampleIndex]));
+                }
+                ctx.stroke(); // linearly interpolate
+
+                // plot markers on canvas
+                if (an.length > 0) {
+
+                    var jj;
+                    for (jj = 0; jj < an.length; jj++) {
+                        ctx.beginPath();
+                        ctx.arc(transformX(an[jj] - start + 1), transformY(sg[an[jj] - start + 1]), 20, 0, 2 * Math.PI);
+                        ctx.fill();
+                    }
+                }
+
+            }
+        }
+
+        function plotRR() {
+
+            // clear the current plot
+            RRCtx.clearRect(0, 0, RRCanvas.width, RRCanvas.height);
+
+            // make a border
+            RRCtx.beginPath();
+            RRCtx.rect(0, 0, RRCanvas.width, RRCanvas.height);
+            RRCtx.strokeStyle = "black"; // line color
+            RRCtx.stroke();
+
+            // plot RR time series on canvas (while calculating)
+            if (anno.length > 1) {
+
+                // calculate RR time series
+                var RR = [];
+                var ii;
+                for (ii = 1; ii < anno.length; ii++) {
+                    RR.push(anno[ii] - anno[ii - 1]);
+                }
+
+                // normalize signal
+                var YMax = Math.max(...RR);
+                var YMin = Math.min(...RR);
+                YMax = YMax + 0.04 * (YMax - YMin); // some whitespace padding
+                YMin = YMin - 0.04 * (YMax - YMin);
+                var XMax = sig.length; //Math.max(...anno) + Fs;
+                var XMin = 1; // Math.min(...anno);
+
+                // to change units of pixels
+                function transformX(x) {
+                    return Math.round((x - XMin) / (XMax - XMin) * (RRCanvas.width - 1));
+                }
+
+                function transformY(y) {
+                    var tmp = 1 - (y - YMin) / (YMax - YMin); // normalize and reflect
+                    return Math.round(tmp * (RRCanvas.height - 1));
+                }
+
+                // plot first point of RR
+                RRCtx.beginPath()
+                RRCtx.moveTo(transformX(anno[1]), transformY(RR[0]))
+
+                // plot remaining points of sg
+                for (ii = 1; ii < RR.length; ii++) {
+                    RRCtx.lineTo(transformX(anno[ii + 1]), transformY(RR[ii]));
+                }
+                RRCtx.strokeStyle = "#860010"; // line color
+                RRCtx.stroke(); // linearly interpolate
+
+            }
+
+        }
+
+        // update plot
+        getPlottingPreferences();
+        plotAction(sig.slice(start - 1, finish));
+        plotRR();
+
+        // manage key presses (for shifting frame)
+        document.addEventListener('keydown', processKey);
+
+        function processKey(event) {
+            switch (event.code) {
+                case "ArrowLeft":
+                    // shift left
+                    start = Math.max(1, start - Math.round(frame / 2));
+                    document.getElementById("startTime").value = (start - 1) / Fs;
+                    finish = start - 1 + frame;
+                    plotAction(sig.slice(start - 1, finish));
+                    break;
+                case "ArrowRight":
+                    // shift right
+                    start = Math.min(sig.length - frame + 1, start + Math.round(frame / 2));
+                    document.getElementById("startTime").value = (start - 1) / Fs;
+                    finish = start - 1 + frame;
+                    plotAction(sig.slice(start - 1, finish));
+                    break;
+                default:
+                    // no match
+            }
+        }
+
+        // update button element
+        var updateButton = document.getElementById("update");
+        updateButton.addEventListener("click", function () {
+            getPlottingPreferences();
+            plotAction(sig.slice(start - 1, finish));
+            plotRR();
+        });
+
+        // save button element
+        var saveButton = document.getElementById("done");
+
+        // listen for button press and then call to proceed
+        saveButton.addEventListener("click", function () {
+            var blob = new Blob([anno], {
+                type: 'text/csv; encoding:utf-8'
+            });
+            saveAs(blob, "anno" + signalInputElement.files[0].name);
+        });
+
+
+        // get coordinates of click on object
+        function getElementPosition(obj) {
+            var curleft = 0;
+            if (obj.offsetParent) {
+                do {
+                    curleft += obj.offsetLeft;
+                } while (obj = obj.offsetParent);
+                return curleft;
+            }
+            return undefined;
+        };
+
+        // callback function for click on canvas (plot)
+        function getEventLocation(element, event) {
+            return event.pageX - getElementPosition(element);
+        };
+
+        // add click sensitivity to canvas and carry out annotation adjustment
+        canvas.addEventListener("click", function (event) {
+            var XPixel = getEventLocation(this, event) * 5; // indexed from zero
+            var XSample = Math.round(XPixel / (canvas.width - 1) * frame + start); // indexed from 1
+            // see if within range of a marker
+            var rIndex;
+            var distance;
+            const clickRadius = 30; // pixels // markers have 20 pixel radius
+            if (anno.length > 0) {
+                if ((anno[0] - XSample) / frame * (canvas.width - 1) > clickRadius) {
+                    anno.unshift(XSample); // add to beginning of annotations
+                } else if ((XSample - anno[anno.length - 1]) / frame * (canvas.width - 1) > clickRadius) {
+                    anno.push(XSample); // add to end of annotations
+                    console.log(XSample - anno[anno.length - 1]);
+                } else {
+                    // search through markers for one that is close
+                    for (rIndex = 0; rIndex < anno.length; rIndex++) {
+                        distance = Math.abs(XSample - anno[rIndex]) / frame * (canvas.width - 1); // in pixels
+                        if (distance <= clickRadius) {
+                            // found a close marker, so remove that marker
+                            anno.splice(rIndex, 1);
+                            break;
+                        }
+                        if (anno[rIndex] > XSample) {
+                            // went past the sample without finding a match, so add it as a marker
+                            anno.splice(rIndex, 0, XSample);
+                            break;
+                        }
+                    }
+                }
+            } else { // the annotations were previously empty
+                anno = [XSample];
+            }
+            // update plots
+            plotAction(sig.slice(start - 1, finish));
+            plotRR();
+        });
+
+        // add click sensitivity to RR canvas and carry out zoom adjustment
+        RRCanvas.addEventListener("click", function (event) {
+            var XPX = getEventLocation(this, event) * 5; // indexed from zero
+            var XSX = Math.round(XPX / (RRCanvas.width - 1) * sig.length); // indexed from 1
+            // adjust start time
+            start = XSX - Math.round(frame / 2);
+            start = Math.max(1, start);
+            start = Math.min(sig.length - frame + 1, start);
+            document.getElementById("startTime").value = (start - 1) / Fs;
+
+            // adjust finish time
+            finish = start - 1 + frame;
+
+            // replot
+            plotAction(sig.slice(start - 1, finish));
+
+        }, false);
+
+
+    }
+
+}
