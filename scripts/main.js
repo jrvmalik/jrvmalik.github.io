@@ -73,12 +73,35 @@ function onload() {
         ctx.lineWidth = 5; // make sure lines will show up
         ctx.fillStyle = "#0E47D6"; // marker color
 
-        // current plotting preferences
-        var start = 1; // start at first sample
-        var frame = 10 * 200; // length of signal to be plotted
-        var finish = start - 1 + frame; // last sample to be plotted
+        // initialize plotting preferences
+        var Fs;
+        var start;
+        var frame;
+        var finish;
 
-        // current signal range
+        // get plotting preferences
+        function getPlottingPreferences() {
+
+            // sampling rate
+            Fs = document.getElementById("hertz").value; 
+
+            // length of signal to be plotted (in samples)
+            frame = Math.min(sig.length, document.getElementById("frame").value * Fs);
+            document.getElementById("frame").value = frame / Fs;
+
+            // first sample to be plotted (index from 1)
+            start = Math.round(document.getElementById("startTime").value * Fs) + 1;
+            start = Math.max(1, start);   
+            start = Math.min(sig.length - frame + 1, start);
+            document.getElementById("startTime").value = (start - 1) / Fs;
+
+            // last sample to be plotted
+            finish = start - 1 + frame; 
+
+        }
+
+        // update plot
+        getPlottingPreferences();
         plotAction(sig.slice(start - 1, finish));
 
         function plotAction(sg) {
@@ -147,12 +170,14 @@ function onload() {
                 case "ArrowLeft":
                     // shift left
                     start = Math.max(1, start - Math.round(frame / 2));
+                    document.getElementById("startTime").value = (start - 1) / Fs;
                     finish = start - 1 + frame;
                     plotAction(sig.slice(start - 1, finish));
                     break;
                 case "ArrowRight":
                     // shift right
                     start = Math.min(sig.length - frame + 1, start + Math.round(frame / 2));
+                    document.getElementById("startTime").value = (start - 1) / Fs;
                     finish = start - 1 + frame;
                     plotAction(sig.slice(start - 1, finish));
                     break;
@@ -160,6 +185,13 @@ function onload() {
                     // no match
             }
         }
+
+        // update button element
+        var updateButton = document.getElementById("update");
+        updateButton.addEventListener("click", function () {
+            getPlottingPreferences();
+            plotAction(sig.slice(start - 1, finish));
+        });
 
         // save button element
         var saveButton = document.getElementById("done");
@@ -197,7 +229,7 @@ function onload() {
             // see if within range of a marker
             var rIndex;
             var distance;
-            for (rIndex = 0; rIndex < anno.length; rIndex++){
+            for (rIndex = 0; rIndex < anno.length; rIndex++) {
                 distance = Math.abs(XSample - anno[rIndex]) / frame * (canvas.width - 1); // in pixels
                 if (distance <= 30) { // markers have 20 pixel radius
                     // found a close marker
@@ -211,7 +243,7 @@ function onload() {
                     break;
                 }
             }
-            
+
         });
 
     }
