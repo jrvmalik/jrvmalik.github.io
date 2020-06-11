@@ -276,7 +276,7 @@ function beginAnnotation(sig, anno) {
         var blob = new Blob([anno], {
             type: 'text/csv; encoding:utf-8'
         });
-        saveAs(blob, "anno" + signalInputElement.files[0].name);
+        saveAs(blob, "anno" + document.getElementById("signalInput").files[0].name);
     });
 
 
