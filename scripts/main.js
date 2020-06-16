@@ -224,7 +224,7 @@ function beginAnnotation(sig, anno) {
             for (ii = 1; ii < RR.length; ii++) {
                 RRCtx.lineTo(transformX(anno[ii + 1]), transformY(RR[ii]));
             }
-            RRCtx.strokeStyle = "#860010"; // line color
+            RRCtx.strokeStyle = "#E00A0F"; // line color
             RRCtx.stroke(); // linearly interpolate
 
         }
